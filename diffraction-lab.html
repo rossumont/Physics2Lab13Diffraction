@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Diffraction of Laser Light</title>
+<style>
+:root{
+  --bg:#0B1A2B; --ink:#F2EEE3; --dim:#8A97A8; --line:rgba(242,238,227,.14);
+  --green:#7FD4A8; --amber:#E8B23A; --panel:rgba(255,255,255,.035);
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI","Noto Sans Thai",sans-serif;overflow:hidden}
+body{background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);background-size:32px 32px;background-color:var(--bg)}
+body::before{content:"";position:fixed;inset:0;background:radial-gradient(ellipse at center,transparent 40%,rgba(11,26,43,.85));pointer-events:none}
+#app{position:relative;height:100vh;height:100dvh;display:flex;flex-direction:column;padding:10px 14px 0;gap:8px}
+header{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+h1{font-size:clamp(17px,2.4vw,24px);font-weight:800;letter-spacing:.2px}
+.sub{color:var(--dim);font-size:13px;margin-top:2px}
+.hbtns{display:flex;gap:6px;flex-shrink:0}
+.obtn{background:transparent;border:1px solid rgba(242,238,227,.4);color:var(--ink);border-radius:8px;padding:6px 11px;font-size:13px;cursor:pointer;font-family:inherit}
+.obtn:hover{border-color:var(--green);color:var(--green)}
+.obtn.on{border-color:var(--amber);color:var(--amber)}
+#chips{display:flex;flex-direction:column;gap:6px}
+.crow{display:flex;gap:6px;overflow-x:auto;white-space:nowrap;padding-bottom:2px;scrollbar-width:none;align-items:center}
+.crow::-webkit-scrollbar{display:none}
+.glab{color:var(--dim);font-size:11px;font-family:var(--mono);margin:0 2px 0 8px;text-transform:uppercase}
+.glab:first-child{margin-left:0}
+.gap{width:10px;flex-shrink:0}
+.chip{background:var(--panel);border:1px solid rgba(242,238,227,.18);color:var(--ink);border-radius:999px;padding:6px 12px;font-size:13px;font-family:var(--mono);cursor:pointer;flex-shrink:0}
+.chip.sel{border-color:var(--green);color:var(--green);box-shadow:0 0 0 1px var(--green) inset;background:rgba(127,212,168,.08)}
+.chip.selA{border-color:var(--amber);color:var(--amber);box-shadow:0 0 0 1px var(--amber) inset}
+#stage{flex:1;min-height:0;display:flex;flex-direction:column;gap:8px;padding-bottom:42px}
+.view{position:relative;border:1px solid rgba(242,238,227,.16);border-radius:10px;overflow:hidden;background:rgba(5,12,20,.55)}
+#topWrap{flex:0 0 22%}
+#scrWrap{flex:1;cursor:grab;touch-action:none}
+#scrWrap:active{cursor:grabbing}
+canvas{display:block;width:100%;height:100%}
+.tag{position:absolute;top:6px;left:9px;font-family:var(--mono);font-size:11px;color:var(--dim);pointer-events:none}
+.pan{position:absolute;top:6px;right:9px;font-family:var(--mono);font-size:12px;color:var(--dim);pointer-events:none}
+#bar{position:fixed;left:50%;transform:translateX(-50%);bottom:28px;display:flex;align-items:center;gap:10px;background:rgba(11,26,43,.92);border:1px solid rgba(242,238,227,.22);border-radius:14px;padding:8px 12px;backdrop-filter:blur(6px);z-index:5}
+#lampBtn{min-width:96px}
+#credit{position:fixed;left:0;right:0;bottom:5px;text-align:center;font-size:clamp(10px,2.7vw,11px);line-height:1.35;color:var(--dim);padding:0 8px}
+#credit div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#modal{position:fixed;inset:0;background:rgba(3,8,14,.75);display:none;align-items:center;justify-content:center;z-index:20;padding:14px}
+#modal.show{display:flex}
+.card{background:#0F2236;border:1px solid rgba(242,238,227,.25);border-radius:14px;padding:18px;width:min(520px,100%);max-height:90vh;overflow:auto}
+.card h2{font-size:17px;margin-bottom:10px}
+.card h3{font-size:13px;color:var(--amber);margin:14px 0 6px;font-family:var(--mono);text-transform:uppercase}
+.card input[type=password],.card input[type=text],.card input[type=email],.card input[type=number]{width:100%;background:#0B1A2B;border:1px solid rgba(242,238,227,.3);color:var(--ink);border-radius:8px;padding:8px 10px;font-size:14px;font-family:var(--mono);margin:4px 0}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:4px 0}
+.row label{font-size:14px;display:flex;align-items:center;gap:6px;cursor:pointer}
+.msg{font-size:13px;margin-top:6px;min-height:16px}
+.ok{color:var(--green)} .bad{color:#ff8a7a}
+table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12px}
+td,th{border-bottom:1px solid rgba(242,238,227,.12);padding:4px 6px;text-align:left}
+th{color:var(--dim);font-weight:500}
+.close{float:right}
+.note{font-size:12px;color:var(--dim);margin-top:4px}
+@media (max-width:600px){#app{padding:8px 8px 0}#lampBtn{min-width:76px}#topWrap{flex-basis:20%}}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div><h1 data-t="title"></h1><div class="sub" data-t="subtitle"></div></div>
+    <div class="hbtns"><button class="obtn" id="langBtn"></button><button class="obtn" id="teachBtn" data-t="teacher"></button></div>
+  </header>
+  <div id="chips"></div>
+  <div id="stage">
+    <div class="view" id="topWrap"><canvas id="topCv"></canvas><span class="tag" data-t="topview"></span></div>
+    <div class="view" id="scrWrap"><canvas id="scrCv"></canvas><span class="tag" data-t="screenview"></span><span class="pan" id="panHint">⇆</span></div>
+  </div>
+</div>
+<div id="credit"></div>
+<div id="modal"><div class="card" id="card"></div></div>
+
+<script>
+const T={
+ en:{title:"Diffraction of Laser Light",subtitle:"Find the wavelength from single-slit, double-slit and circular-hole patterns",teacher:"Teacher",
+  topview:"TOP VIEW",screenview:"SCREEN — YOUR VIEW",ap:"Aperture",single:"Single slit",double:"Double slit",circ:"Circular hole",
+  dist:"L",zoom:"Zoom",on:"🔴 LASER ON",off:"⚫ LASER OFF",
+  credit:["Asst.Prof.Dr. Rossumont Jaryabhand · No Right Reserved","Rajamangala University of Technology Tawan-ok, Uthenthawai Campus"],
+  pwTitle:"Teacher access",pwPh:"Password",enter:"Enter",wrong:"Wrong password",
+  tpTitle:"Teacher panel",ans:"Show answers on screen",lasL:"Laser wavelength (nm)",
+  keyT:"Answer key (current setting)",mins:"dark fringes (minima)",maxs:"bright fringes (maxima)",rings:"dark rings (radius)",
+  link:"Student link",gen:"Create & copy link",copied:"Copied ✓ — send this link to students",
+  chg:"Change password",email:"Email",adm:"Account password",newpw:"New password",save:"Save",
+  saved:"Saved ✓ (this browser)",noauth:"Email or account password incorrect",close:"Close",
+  fT:"Formulas",fs:"Single slit, dark: a sinθ = mλ",fd:"Double slit, bright: d sinθ = mλ",fc:"Circular hole, 1st dark ring: D sinθ = 1.22λ",
+  m:"m",y:"y (cm)"},
+ th:{title:"การเลี้ยวเบนของแสงเลเซอร์",subtitle:"หาความยาวคลื่นจากช่องเดี่ยว ช่องคู่ และรูกลม",teacher:"ครู",
+  topview:"มุมมองด้านบน",screenview:"ฉาก — ภาพที่ตาเห็น",ap:"ช่อง",single:"ช่องเดี่ยว",double:"ช่องคู่",circ:"รูกลม",
+  dist:"L",zoom:"ขยาย",on:"🔴 เปิดเลเซอร์",off:"⚫ ปิดเลเซอร์",
+  credit:["ผศ.ดร.รสสุมนต์ จารยะพันธุ์ · ไม่สงวนลิขสิทธิ์","มหาวิทยาลัยเทคโนโลยีราชมงคลตะวันออก อุเทนถวาย"],
+  pwTitle:"เข้าโหมดครู",pwPh:"รหัสผ่าน",enter:"เข้า",wrong:"รหัสผ่านไม่ถูกต้อง",
+  tpTitle:"แผงครู",ans:"แสดงคำตอบบนฉาก",lasL:"ความยาวคลื่นเลเซอร์ (nm)",
+  keyT:"เฉลย (ค่าที่ตั้งอยู่ตอนนี้)",mins:"แถบมืด (minima)",maxs:"แถบสว่าง (maxima)",rings:"วงมืด (รัศมี)",
+  link:"ลิงก์นักศึกษา",gen:"สร้างและคัดลอกลิงก์",copied:"คัดลอกแล้ว ✓ — ส่งลิงก์นี้ให้นักศึกษา",
+  chg:"เปลี่ยนรหัสผ่าน",email:"อีเมล",adm:"รหัสผ่านบัญชี",newpw:"รหัสผ่านใหม่",save:"บันทึก",
+  saved:"บันทึกแล้ว ✓ (เฉพาะเบราว์เซอร์นี้)",noauth:"อีเมลหรือรหัสผ่านบัญชีไม่ถูกต้อง",close:"ปิด",
+  fT:"สูตร",fs:"ช่องเดี่ยว แถบมืด: a sinθ = mλ",fd:"ช่องคู่ แถบสว่าง: d sinθ = mλ",fc:"รูกลม วงมืดวงแรก: D sinθ = 1.22λ",
+  m:"m",y:"y (cm)"}
+};
+
+// apertures (sizes in mm)
+const AP={
+ single:{sym:'a',vals:[0.02,0.04,0.08,0.16]},
+ double:{sym:'d',vals:[0.125,0.25,0.5],a:0.04},
+ circ:{sym:'D',vals:[0.05,0.1,0.2,0.4]}
+};
+const AP_KEYS=['single','double','circ'];
+const DISTS=[50,100,150,200,300], ZOOMS=[1,2,4,8,16];
+const HALF=20; // screen half width (cm)
+const BEAM=0.1; // laser beam radius-ish (cm), vertical spread for slits
+
+const DEF_PW="9;5:4*5‘";
+const ADMIN_EMAIL="rossumont@gmail.com", ADMIN_PW="LhaMoAPL9545=";
+const normPw=s=>String(s).replace(/[‘’'`´]/g,"'").trim();
+const getPw=()=>{try{return localStorage.getItem('diffLabPw')||DEF_PW}catch(e){return DEF_PW}};
+
+let cfg={las:650};
+try{const q=new URLSearchParams(location.search).get('cfg');
+ if(q){const o=JSON.parse(decodeURIComponent(escape(atob(q.replace(/-/g,'+').replace(/_/g,'/')))));
+  if(+o.las>=400&&+o.las<=700)cfg.las=+o.las;}}catch(e){}
+const S={lang:'en',ap:'single',idx:{single:1,double:1,circ:1},L:100,zoom:1,cx:0,on:true,ans:false,teacher:false};
+const tr=k=>T[S.lang][k]||k;
+const size=()=>AP[S.ap].vals[S.idx[S.ap]];
+
+function wl2rgb(l){
+  let r=0,g=0,b=0;
+  if(l<440){r=-(l-440)/60;b=1}else if(l<490){g=(l-440)/50;b=1}else if(l<510){g=1;b=-(l-510)/20}
+  else if(l<580){r=(l-510)/70;g=1}else if(l<645){r=1;g=-(l-645)/65}else{r=1}
+  return [r,g,b];
+}
+const css=(c,a=1)=>`rgba(${Math.round(c[0]*255)},${Math.round(c[1]*255)},${Math.round(c[2]*255)},${a})`;
+
+// Bessel J1 (polynomial approximation)
+function J1(x){
+  const ax=Math.abs(x);
+  if(ax<8){const y=x*x;
+    const n=x*(72362614232.0+y*(-7895059235.0+y*(242396853.1+y*(-2972611.439+y*(15704.48260+y*(-30.16036606))))));
+    const d=144725228442.0+y*(2300535178.0+y*(18583304.74+y*(99447.43394+y*(376.9991397+y))));return n/d}
+  const z=8/ax,y=z*z,xx=ax-2.356194491;
+  const p1=1+y*(0.183105e-2+y*(-0.3516396496e-4+y*(0.2457520174e-5+y*(-0.240337019e-6))));
+  const p2=0.04687499995+y*(-0.2002690873e-3+y*(0.8449199096e-5+y*(-0.88228987e-6+y*0.105787412e-6)));
+  const r=Math.sqrt(0.636619772/ax)*(Math.cos(xx)*p1-z*Math.sin(xx)*p2);
+  return x<0?-r:r;
+}
+
+// intensity, x,y in cm on the screen
+function sinT(r){return r/Math.sqrt(r*r+S.L*S.L)}
+function slitI(x){
+  const lam=cfg.las*1e-7, s=sinT(x);
+  const a=(S.ap==='double'?AP.double.a:size())*0.1;
+  const b=Math.PI*a*s/lam; let I=Math.abs(b)<1e-9?1:(Math.sin(b)/b)**2;
+  if(S.ap==='double'){const d=size()*0.1;const c=Math.cos(Math.PI*d*s/lam);I*=c*c}
+  return I;
+}
+function circI(r){
+  const lam=cfg.las*1e-7, v=Math.PI*size()*0.1*sinT(r)/lam;
+  if(v<1e-6)return 1; const q=2*J1(v)/v; return q*q;
+}
+// answer positions (cm)
+function yAt(sn){if(Math.abs(sn)>=1)return null;return S.L*sn/Math.sqrt(1-sn*sn)}
+function answerList(){
+  const lam=cfg.las*1e-6, out=[]; // lam in mm
+  if(S.ap==='single'){for(let m=1;m<=4;m++){const y=yAt(m*lam/size());if(y!==null)out.push([m,y])}}
+  else if(S.ap==='double'){for(let m=1;m<=5;m++){const y=yAt(m*lam/size());if(y!==null)out.push([m,y])}}
+  else{[1.2197,2.2331,3.2383].forEach((k,i)=>{const y=yAt(k*lam/size());if(y!==null)out.push([i+1,y])})}
+  return out;
+}
+
+// ---------- UI ----------
+const chips=document.getElementById('chips');
+function buildChips(){
+  chips.innerHTML='';
+  const r1=document.createElement('div'),r2=document.createElement('div'),r3=document.createElement('div');r1.className=r2.className=r3.className='crow';chips.append(r1,r2,r3);let row=r1;
+  const grp=(lab,items,cur,fmt,set,amber,keepCase)=>{
+    if(row.childNodes.length){const sp=document.createElement('span');sp.className='gap';row.appendChild(sp)}
+    const g=document.createElement('span');g.className='glab';g.textContent=lab;if(keepCase)g.style.textTransform='none';row.appendChild(g);
+    items.forEach(v=>{const b=document.createElement('button');b.className='chip'+(v===cur?(amber?' selA':' sel'):'');
+      b.textContent=fmt(v);b.onclick=()=>{set(v);buildChips();renderAll()};row.appendChild(b)});
+  };
+  grp(tr('ap'),AP_KEYS,S.ap,k=>tr(k),k=>{S.ap=k;S.cx=0});
+  const A=AP[S.ap];
+  row=r2;
+  grp(A.sym+(S.ap==='double'?' (a = '+A.a+' mm)':''),A.vals.map((v,i)=>i),S.idx[S.ap],i=>A.vals[i]+' mm',i=>S.idx[S.ap]=i,false,true);
+  row=r3;
+  grp(tr('dist'),DISTS,S.L,v=>v+' cm',v=>S.L=v);
+  grp(tr('zoom'),ZOOMS,S.zoom,v=>v+'×',v=>{S.zoom=v;clampCx()},true);
+}
+function applyLang(){
+  document.documentElement.lang=S.lang;
+  document.querySelectorAll('[data-t]').forEach(e=>e.textContent=tr(e.dataset.t));
+  document.getElementById('langBtn').textContent=S.lang==='en'?'EN / ไทย':'ไทย / EN';
+  document.getElementById('credit').innerHTML=T[S.lang].credit.map(t=>'<div>'+t+'</div>').join('');
+  document.title=tr('title');buildChips();
+}
+document.getElementById('langBtn').onclick=()=>{S.lang=S.lang==='en'?'th':'en';applyLang();renderAll();if(document.getElementById('modal').classList.contains('show')&&S.teacher)teacherPanel()};
+
+const topCv=document.getElementById('topCv'),scrCv=document.getElementById('scrCv');
+const topWrap=document.getElementById('topWrap'),scrWrap=document.getElementById('scrWrap');
+function fit(cv,wrap){const r=wrap.getBoundingClientRect(),dpr=Math.min(window.devicePixelRatio||1,2);
+  cv.width=Math.max(10,Math.round(r.width*dpr));cv.height=Math.max(10,Math.round(r.height*dpr));return dpr}
+let DPR=1;
+function renderAll(){DPR=fit(topCv,topWrap);fit(scrCv,scrWrap);drawTop();drawScreen();document.getElementById('panHint').style.display=S.zoom>1?'block':'none'}
+new ResizeObserver(()=>renderAll()).observe(document.getElementById('stage'));
+function clampCx(){const hw=HALF/S.zoom;S.cx=Math.max(-HALF+hw,Math.min(HALF-hw,S.cx))}
+
+// ---------- top view ----------
+function drawTop(){
+  const c=topCv.getContext('2d'),W=topCv.width,H=topCv.height,d=DPR;
+  c.clearRect(0,0,W,H);
+  const col=wl2rgb(cfg.las), yc=H/2;
+  const xa=90*d, sx=Math.min((W-xa-40*d)/300,4*d), xs=xa+S.L*sx;
+  c.strokeStyle='rgba(242,238,227,.18)';c.setLineDash([4*d,4*d]);c.lineWidth=d;
+  c.beginPath();c.moveTo(14*d,yc);c.lineTo(xa+300*sx+10*d,yc);c.stroke();c.setLineDash([]);
+  // laser body
+  c.fillStyle='#3a4658';c.fillRect(14*d,yc-9*d,46*d,18*d);c.fillStyle=css(col);c.fillRect(56*d,yc-3*d,4*d,6*d);
+  // beam
+  if(S.on){c.strokeStyle=css(col,.9);c.lineWidth=2*d;c.shadowColor=css(col);c.shadowBlur=8*d;
+    c.beginPath();c.moveTo(60*d,yc);c.lineTo(xa,yc);c.stroke();c.shadowBlur=0}
+  // aperture plate
+  const h=H*.36;c.fillStyle='#8A97A8';
+  if(S.ap==='double'){c.fillRect(xa-1.5*d,yc-h,3*d,h-5*d);c.fillRect(xa-1.5*d,yc-2*d,3*d,4*d);c.fillRect(xa-1.5*d,yc+5*d,3*d,h-5*d)}
+  else{c.fillRect(xa-1.5*d,yc-h,3*d,h-2.5*d);c.fillRect(xa-1.5*d,yc+2.5*d,3*d,h-2.5*d)}
+  // spreading fan
+  if(S.on){const ans=answerList();const yr=ans.length?ans[Math.min(ans.length-1,2)][1]:3;
+    const spread=Math.min(H*.42,Math.max(6*d,yr*sx*6));
+    const g=c.createLinearGradient(xa,0,xs,0);g.addColorStop(0,css(col,.55));g.addColorStop(1,css(col,.15));
+    c.fillStyle=g;c.beginPath();c.moveTo(xa,yc);c.lineTo(xs,yc-spread);c.lineTo(xs,yc+spread);c.closePath();c.fill();
+    c.strokeStyle=css(col,.9);c.lineWidth=1.2*d;c.beginPath();c.moveTo(xa,yc);c.lineTo(xs,yc);c.stroke()}
+  // screen
+  c.strokeStyle='#F2EEE3';c.lineWidth=3*d;c.beginPath();c.moveTo(xs,4*d);c.lineTo(xs,H-4*d);c.stroke();
+  // labels
+  c.font=`${11*d}px ui-monospace,Menlo,monospace`;c.textAlign='center';
+  c.fillStyle='#7FD4A8';c.textBaseline='top';c.textAlign='left';c.fillText(AP[S.ap].sym+' = '+size()+' mm',xa+7*d,yc-h);c.textAlign='center';
+  const yd=H-10*d;c.strokeStyle='#E8B23A';c.fillStyle='#E8B23A';c.lineWidth=d;
+  c.beginPath();c.moveTo(xa,yd);c.lineTo(xs,yd);c.stroke();
+  [[xa,1],[xs,-1]].forEach(([x,s])=>{c.beginPath();c.moveTo(x,yd);c.lineTo(x+s*6*d,yd-3*d);c.lineTo(x+s*6*d,yd+3*d);c.fill()});
+  const lt='L = '+S.L+' cm',tw=c.measureText(lt).width;c.textBaseline='bottom';
+  if(tw+8*d<xs-xa)c.fillText(lt,(xa+xs)/2,yd-3*d);else{c.textAlign='left';c.fillText(lt,xs+6*d,yd+4*d)}
+}
+
+// ---------- screen (eye view) ----------
+function drawScreen(){
+  const c=scrCv.getContext('2d'),W=scrCv.width,H=scrCv.height,d=DPR;
+  const hw=HALF/S.zoom,x0=S.cx-hw,ppc=W/(2*hw);
+  const rulerH=Math.min(62*d,H*.28),avail=Math.floor(H-rulerH),yMid=avail/2;
+  const bg=[20,23,29];
+  c.fillStyle=`rgb(${bg})`;c.fillRect(0,0,W,H);
+  if(S.on){
+    const col=wl2rgb(cfg.las),K=40;
+    const img=c.createImageData(W,avail),D=img.data;
+    const shade=(I,o)=>{const s=1-Math.exp(-K*I),w=(1-Math.exp(-K*I/25))*.65;
+      D[o]=bg[0]+(255-bg[0])*Math.min(1,col[0]*s+(1-col[0])*w);
+      D[o+1]=bg[1]+(255-bg[1])*Math.min(1,col[1]*s+(1-col[1])*w);
+      D[o+2]=bg[2]+(255-bg[2])*Math.min(1,col[2]*s+(1-col[2])*w);D[o+3]=255};
+    if(S.ap!=='circ'){
+      const Ix=new Float32Array(W),SS=6;
+      for(let i=0;i<W;i++){let a=0;for(let k=0;k<SS;k++)a+=slitI(x0+(i+(k+.5)/SS)/ppc);Ix[i]=a/SS}
+      const sig=Math.max(BEAM*ppc,2*d);
+      for(let r=0;r<avail;r++){const dy=(r+.5-yMid);const g=Math.exp(-dy*dy/(2*sig*sig));
+        let o=r*W*4;for(let i=0;i<W;i++,o+=4)shade(Ix[i]*g,o)}
+    }else{
+      // radial lookup table
+      const rmax=Math.hypot(hw+Math.abs(S.cx),avail/ppc/2)+.5,N=4000,LUT=new Float32Array(N+1);
+      const step=rmax/N;
+      for(let k=0;k<=N;k++){let a=0;for(let q=0;q<4;q++)a+=circI(Math.max(0,(k+(q-1.5)/4)*step));LUT[k]=a/4}
+      for(let r=0;r<avail;r++){const yy=(r+.5-yMid)/ppc;let o=r*W*4;
+        for(let i=0;i<W;i++,o+=4){const xx=x0+(i+.5)/ppc;const k=Math.min(N,Math.hypot(xx,yy)/step);shade(LUT[k|0],o)}}
+    }
+    c.putImageData(img,0,0);
+  }
+  // ruler
+  const ry=avail;c.fillStyle='#b8b19c';c.fillRect(0,ry,W,rulerH);
+  c.fillStyle='rgba(0,0,0,.25)';c.fillRect(0,ry,W,2*d);
+  const ppcCss=ppc/d,minor=ppcCss*.1>=4?.1:ppcCss*.5>=5?.5:1;
+  const lab=[1,2,5,10].find(s=>s*ppcCss>=34)||10;
+  c.strokeStyle='#1d1a14';c.lineWidth=Math.max(1,d*.9);c.beginPath();
+  for(let n=Math.ceil(x0/minor-1e-9);n<=Math.floor((S.cx+hw)/minor+1e-9);n++){
+    const v=n*minor,x=Math.round((v-x0)*ppc)+.5;
+    const isCm=Math.abs(v-Math.round(v))<1e-6,is5=isCm&&Math.round(v)%5===0;
+    const tl=(is5?22:isCm?15:(Math.abs(v*2-Math.round(v*2))<1e-6?10:7))*d;
+    c.moveTo(x,ry+2*d);c.lineTo(x,ry+2*d+tl)}
+  c.stroke();
+  c.font=`${11*d}px ui-monospace,Menlo,monospace`;c.textAlign='center';c.textBaseline='top';
+  for(let v=Math.ceil(x0/lab)*lab;v<=S.cx+hw+1e-9;v+=lab){c.fillStyle=Math.abs(v)<1e-6?'#9a5a00':'#1d1a14';c.fillText(String(Math.abs(Math.round(v))),(v-x0)*ppc,ry+26*d)}
+  c.textAlign='right';c.fillStyle='#4a4535';c.fillText('cm',W-6*d,ry+rulerH-15*d);
+  const xc=(0-x0)*ppc;
+  if(xc>0&&xc<W){c.strokeStyle='rgba(232,178,58,.3)';c.setLineDash([3*d,5*d]);c.lineWidth=d;c.beginPath();c.moveTo(xc,8*d);c.lineTo(xc,ry);c.stroke();c.setLineDash([])}
+  // answers
+  if(S.ans&&S.teacher&&S.on){
+    c.strokeStyle='rgba(232,178,58,.85)';c.fillStyle='#E8B23A';c.lineWidth=d;c.font=`${10.5*d}px ui-monospace,Menlo,monospace`;c.textAlign='center';c.textBaseline='bottom';
+    answerList().forEach(([m,y])=>{
+      if(S.ap==='circ'){c.setLineDash([4*d,4*d]);c.beginPath();c.arc(xc,yMid,y*ppc,0,2*Math.PI);c.stroke();c.setLineDash([])}
+      [-1,1].forEach(s=>{const x=(s*y-x0)*ppc;if(x<0||x>W)return;
+        c.beginPath();c.moveTo(x,ry-14*d);c.lineTo(x,ry);c.stroke();c.fillText((s<0?'-':'')+m,x,ry-15*d)})});
+    c.textAlign='right';c.textBaseline='top';c.fillText('λ = '+cfg.las+' nm',W-10*d,26*d);
+  }
+}
+
+// ---------- pan ----------
+let drag=null;
+scrWrap.addEventListener('pointerdown',e=>{if(S.zoom===1)return;drag={x:e.clientX,cx:S.cx};scrWrap.setPointerCapture(e.pointerId)});
+scrWrap.addEventListener('pointermove',e=>{if(!drag)return;const w=scrWrap.getBoundingClientRect().width;S.cx=drag.cx-(e.clientX-drag.x)*(2*HALF/S.zoom)/w;clampCx();drawScreen()});
+['pointerup','pointercancel'].forEach(t=>scrWrap.addEventListener(t,()=>drag=null));
+
+// ---------- teacher ----------
+const modal=document.getElementById('modal'),card=document.getElementById('card');
+document.getElementById('teachBtn').onclick=()=>{S.teacher?teacherPanel():pwPrompt();modal.classList.add('show')};
+modal.addEventListener('click',e=>{if(e.target===modal)modal.classList.remove('show')});
+function pwPrompt(){
+  card.innerHTML=`<button class="obtn close" id="x">${tr('close')}</button><h2>${tr('pwTitle')}</h2>
+  <input type="password" id="pw" placeholder="${tr('pwPh')}" autocomplete="off"><div class="row"><button class="obtn" id="go">${tr('enter')}</button></div><div class="msg bad" id="pm"></div>`;
+  document.getElementById('x').onclick=()=>modal.classList.remove('show');
+  const go=()=>{if(normPw(document.getElementById('pw').value)===normPw(getPw())){S.teacher=true;document.getElementById('teachBtn').classList.add('on');teacherPanel();renderAll()}
+    else document.getElementById('pm').textContent=tr('wrong')};
+  document.getElementById('go').onclick=go;
+  document.getElementById('pw').onkeydown=e=>{if(e.key==='Enter')go()};
+  setTimeout(()=>document.getElementById('pw').focus(),50);
+}
+function teacherPanel(){
+  const kind=S.ap==='single'?tr('mins'):S.ap==='double'?tr('maxs'):tr('rings');
+  const rows=answerList().map(([m,y])=>`<tr><td>${m}</td><td>${y.toFixed(3)}</td></tr>`).join('');
+  card.innerHTML=`<button class="obtn close" id="x">${tr('close')}</button><h2>${tr('tpTitle')}</h2>
+  <div class="row"><label><input type="checkbox" id="ans" ${S.ans?'checked':''}> ${tr('ans')}</label></div>
+  <div style="font-size:13px;margin-top:6px">${tr('lasL')}</div>
+  <input type="number" id="las" min="400" max="700" step="0.1" value="${cfg.las}">
+  <h3>${tr('keyT')}</h3>
+  <div style="font-family:var(--mono);font-size:12px;color:var(--dim)">${tr(S.ap)} · ${AP[S.ap].sym} = ${size()} mm · L = ${S.L} cm · λ = ${cfg.las} nm · ${kind}</div>
+  <table><tr><th>${tr('m')}</th><th>${tr('y')}</th></tr>${rows}</table>
+  <h3>${tr('fT')}</h3>
+  <div class="note">${tr('fs')}<br>${tr('fd')}<br>${tr('fc')}<br>sinθ = y / √(y² + L²)</div>
+  <h3>${tr('link')}</h3>
+  <div class="row"><button class="obtn" id="gen">${tr('gen')}</button></div>
+  <input type="text" id="lnk" readonly><div class="msg ok" id="lm"></div>
+  <h3>${tr('chg')}</h3>
+  <input type="email" id="em" placeholder="${tr('email')}"><input type="password" id="ap" placeholder="${tr('adm')}"><input type="password" id="np" placeholder="${tr('newpw')}">
+  <div class="row"><button class="obtn" id="sv">${tr('save')}</button></div><div class="msg" id="sm"></div>`;
+  document.getElementById('x').onclick=()=>modal.classList.remove('show');
+  document.getElementById('ans').onchange=e=>{S.ans=e.target.checked;drawScreen()};
+  document.getElementById('las').onchange=e=>{const v=+e.target.value;if(v>=400&&v<=700){cfg.las=v;renderAll();teacherPanel()}};
+  document.getElementById('gen').onclick=()=>{
+    const b=btoa(unescape(encodeURIComponent(JSON.stringify({las:cfg.las})))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+    const url=location.origin+location.pathname+'?cfg='+b;
+    const f=document.getElementById('lnk');f.value=url;f.select();
+    (navigator.clipboard?navigator.clipboard.writeText(url):Promise.reject()).catch(()=>{try{document.execCommand('copy')}catch(e){}})
+      .finally(()=>document.getElementById('lm').textContent=tr('copied'));
+  };
+  document.getElementById('sv').onclick=()=>{
+    const m=document.getElementById('sm');
+    if(document.getElementById('em').value.trim().toLowerCase()===ADMIN_EMAIL&&document.getElementById('ap').value===ADMIN_PW&&document.getElementById('np').value.trim()){
+      try{localStorage.setItem('diffLabPw',document.getElementById('np').value.trim())}catch(e){}
+      m.className='msg ok';m.textContent=tr('saved');
+    }else{m.className='msg bad';m.textContent=tr('noauth')}
+  };
+}
+
+let fsTried=false;
+document.addEventListener('pointerdown',()=>{if(fsTried)return;fsTried=true;
+  const el=document.documentElement;try{(el.requestFullscreen||el.webkitRequestFullscreen||function(){}).call(el)}catch(e){}},{once:true});
+
+applyLang();renderAll();
+</script>
+</body>
+</html>
